@@ -1,0 +1,37 @@
+#! /usr/bin/python3
+
+import os, sys, subprocess, time, argparse
+
+def num_constraints(file_name):
+    with open(file_name, 'r') as f:
+        l = f.readline()
+        index = l.find('#constraint')
+        constraints = l[index + len('#constraint= '):].strip()
+    x = int(constraints)
+    return x
+
+def main():    
+    parser = argparse.ArgumentParser(description='Solve the benchmarks')
+    parser.add_argument('--solver', metavar='/path/to/solver or "solver invocation"', help='invocation of solver', required=True)
+    parser.add_argument('--max_constraints', metavar='n', help='max constraints to solve', default=1000)
+    parser.add_argument('--outfile', metavar='*.csv', help='path for result file', default='results.csv')
+
+    d = vars(parser.parse_args())
+    solver = d['solver'].split()
+    max_constraints = int(d['max_constraints'])
+    outfile = d['outfile']
+
+    with open(outfile, 'w') as f:
+        for root, dirs, files in os.walk("./"):
+            for name in files:
+                if name.find('.opb') > 0 and num_constraints(root + '/' + name) < max_constraints:
+                    start = time.perf_counter()
+                    subprocess.run(solver + ['{}/{}'.format(root,name)])
+                    end = time.perf_counter()
+                    f.write('{},{}\n'.format(name, end - start))
+
+
+if __name__ == '__main__':
+    main()
+
+    
